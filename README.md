@@ -11,6 +11,7 @@ To build `rand`, you need the following on your system.
 
 *   [CMake](http://www.cmake.org)
 *   A compiler that supports C11.
+*   The [GMP](http://gmplib.org/) library.
 *   The ppuryear/simple-strconv source tree. It should be installed or
     symlinked to a subdirectory of the `rand` source tree named
     `simple-strconv`.
