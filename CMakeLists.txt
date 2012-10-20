@@ -15,7 +15,7 @@
 cmake_minimum_required(VERSION 2.6)
 project(rand C)
 
-add_subdirectory(simple-strconv)
+add_subdirectory(simple-strconv EXCLUDE_FROM_ALL)
 include_directories(simple-strconv/include)
 find_library(LIBGMP gmp)
 
