@@ -1,0 +1,3 @@
+[submodule "simple-strconv"]
+	path = simple-strconv
+	url = https://github.com/ppuryear/simple-strconv.git
