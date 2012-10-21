@@ -91,8 +91,8 @@ static void get_random_number(mpz_t result, mpz_t low, mpz_t high,
 
     bool range_not_pow2 = mpz_popcount(high) > 1;
 
-    mpz_sub_ui(high, high, 1);
     // If |high - low| == 1, there's only one possible result, so return it.
+    mpz_sub_ui(high, high, 1);
     if (mpz_sgn(high) == 0) {
         mpz_set(result, low);
         return;
@@ -111,17 +111,14 @@ static void get_random_number(mpz_t result, mpz_t low, mpz_t high,
         // the chance that we'll never read a valid number is at most 1/2^N,
         // which for N=100 is less than one in a nonillion (assuming the
         // generator is uniform).
-        int i;
-        for (i = 1; i < MAX_TRIES; i++) {
-            if (mpz_cmp(result, high) <= 0)
-                break;
+        int tries = 1;
+        while (mpz_cmp(result, high) > 0) {
             read_mpz(result, source, num_bits);
-        }
-        // If - via some cosmic miracle - we did not read a valid number, just
-        // cry and bail out.
-        if (i == MAX_TRIES) {
-            fatal("system did not return a number within the given bounds"
-                  " (tried %d times)", MAX_TRIES);
+            tries++;
+            if (tries == MAX_TRIES) {
+                fatal("system did not return a number within the given bounds"
+                      " (tried %d times)", MAX_TRIES);
+            }
         }
     }
     mpz_add(result, result, low);
@@ -190,7 +187,6 @@ int main(int argc, char **argv) {
     get_random_number(random_number, low, high, random_source);
     mpz_out_str(stdout, base, random_number);
     putchar('\n');
-
     mpz_clears(low, high, random_number, NULL);
     return EXIT_SUCCESS;
 }
