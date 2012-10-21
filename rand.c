@@ -75,6 +75,7 @@ static void read_mpz(mpz_t result, const char *filename, size_t num_bits) {
         fatal("error reading from file: %s", filename);
     fclose(file);
 
+    // Chop off unnecessary leading bits.
     if (num_bits % CHAR_BIT != 0)
         bytes[0] &= (1 << (num_bits % CHAR_BIT)) - 1;
     mpz_import(result, num_bytes, 1, 1, 0, 0, bytes);
