@@ -22,6 +22,7 @@
 #include "simple_strconv.h"
 
 #define DEFAULT_UPPER_BOUND (1 << 16)
+#define MAX_TRIES 100
 
 static void fatal(const char *msg, ...) {
     va_list ap;
@@ -58,13 +59,14 @@ static void string_to_mpz(mpz_t result, const char *str) {
         fatal("invalid argument: '%s'", str);
 }
 
-static void read_mpz(mpz_t result, const char *filename, size_t num_bytes) {
+static void read_mpz(mpz_t result, const char *filename, size_t num_bits) {
     FILE* file = fopen(filename, "r");
     if (!file)
         fatal("could not open file for reading: %s", filename);
     // Turn off buffering to avoid reading more data than we need.
     setbuf(file, NULL);
 
+    size_t num_bytes = 1 + (num_bits - 1) / CHAR_BIT;
     char* bytes = malloc(num_bytes);
     if (!bytes)
         fatal("out of memory");
@@ -73,43 +75,55 @@ static void read_mpz(mpz_t result, const char *filename, size_t num_bytes) {
         fatal("error reading from file: %s", filename);
     fclose(file);
 
+    if (num_bits % CHAR_BIT != 0)
+        bytes[0] &= (1 << (num_bits % CHAR_BIT)) - 1;
     mpz_import(result, num_bytes, 1, 1, 0, 0, bytes);
     free(bytes);
 }
 
 static void get_random_number(mpz_t result, mpz_t low, mpz_t high,
                               const char *source) {
-    mpz_t range;
-    mpz_init(range);
-    mpz_sub(range, high, low);
-    if (mpz_sgn(range) <= 0)
+    // To conserve memory, repurpose |high| to be a temporary.
+    mpz_sub(high, high, low);
+    if (mpz_sgn(high) <= 0)
         fatal("upper bound must be strictly greater than lower bound");
 
-    // Read sufficient random bytes to fill the range.
-    mpz_t range_inclusive;
-    mpz_init(range_inclusive);
-    mpz_sub_ui(range_inclusive, range, 1);
-    size_t range_bits = mpz_sizeinbase(range_inclusive, 2);
-    size_t num_bytes = 1 + (range_bits - 1) / CHAR_BIT;
-    if (num_bytes == 0) {
-        mpz_set(result, low);
-        goto finish;
-    }
-    read_mpz(result, source, num_bytes);
+    bool range_not_pow2 = mpz_popcount(high) > 1;
 
-    // We need to scale |result| to fit in the range *only if*
-    // |range| != 2^(8*n), where n is an integer. Otherwise, we'll have read
-    // precisely the right number of bytes out of the random source to
-    // saturate the range.
-    mpz_and(range_inclusive, range, range_inclusive);
-    if (mpz_sgn(range_inclusive) != 0 || range_bits % CHAR_BIT != 0) {
-        mpz_mul(result, result, range);
-        mpz_tdiv_q_2exp(result, result, num_bytes * CHAR_BIT);
+    mpz_sub_ui(high, high, 1);
+    // If |high - low| == 1, there's only one possible result, so return it.
+    if (mpz_sgn(high) == 0) {
+        mpz_set(result, low);
+        return;
+    }
+    size_t num_bits = mpz_sizeinbase(high, 2);
+    read_mpz(result, source, num_bits);
+
+    // If the range is not a power of 2, then read_mpz can return a number
+    // larger than the range (by at most a factor of 2). If this happens, retry
+    // until we get a valid number.
+    // This approach avoids the slight non-uniformity of the simpler scale-and-
+    // truncate algorithm.
+    if (range_not_pow2) {
+        // Strictly speaking, there is a chance that we will never read a valid
+        // number, so cap the attempts at some reasonable value. For a cap N,
+        // the chance that we'll never read a valid number is at most 1/2^N,
+        // which for N=100 is less than one in a nonillion (assuming the
+        // generator is uniform).
+        int i;
+        for (i = 1; i < MAX_TRIES; i++) {
+            if (mpz_cmp(result, high) <= 0)
+                break;
+            read_mpz(result, source, num_bits);
+        }
+        // If - via some cosmic miracle - we did not read a valid number, just
+        // cry and bail out.
+        if (i == MAX_TRIES) {
+            fatal("system did not return a number within the given bounds"
+                  " (tried %d times)", MAX_TRIES);
+        }
     }
     mpz_add(result, result, low);
-
-finish:
-    mpz_clears(range, range_inclusive, NULL);
 }
 
 int main(int argc, char **argv) {
