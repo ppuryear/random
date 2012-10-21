@@ -60,14 +60,14 @@ static void string_to_mpz(mpz_t result, const char *str) {
 }
 
 static void read_mpz(mpz_t result, const char *filename, size_t num_bits) {
-    FILE* file = fopen(filename, "r");
+    FILE *file = fopen(filename, "r");
     if (!file)
         fatal("could not open file for reading: %s", filename);
     // Turn off buffering to avoid reading more data than we need.
     setbuf(file, NULL);
 
     size_t num_bytes = 1 + (num_bits - 1) / CHAR_BIT;
-    char* bytes = malloc(num_bytes);
+    char *bytes = malloc(num_bytes);
     if (!bytes)
         fatal("out of memory");
 
@@ -89,8 +89,6 @@ static void get_random_number(mpz_t result, mpz_t low, mpz_t high,
     if (mpz_sgn(high) <= 0)
         fatal("upper bound must be strictly greater than lower bound");
 
-    bool range_not_pow2 = mpz_popcount(high) > 1;
-
     // If |high - low| == 1, there's only one possible result, so return it.
     mpz_sub_ui(high, high, 1);
     if (mpz_sgn(high) == 0) {
@@ -98,27 +96,25 @@ static void get_random_number(mpz_t result, mpz_t low, mpz_t high,
         return;
     }
     size_t num_bits = mpz_sizeinbase(high, 2);
-    read_mpz(result, source, num_bits);
 
     // If the range is not a power of 2, then read_mpz can return a number
     // larger than the range (by at most a factor of 2). If this happens, retry
-    // until we get a valid number.
-    // This approach avoids the slight non-uniformity of the simpler scale-and-
-    // truncate algorithm.
-    if (range_not_pow2) {
-        // Strictly speaking, there is a chance that we will never read a valid
-        // number, so cap the attempts at some reasonable value. For a cap N,
-        // the chance that we'll never read a valid number is at most 1/2^N,
-        // which for N=100 is less than one in a nonillion (assuming the
-        // generator is uniform).
-        int tries = 1;
-        while (mpz_cmp(result, high) > 0) {
-            read_mpz(result, source, num_bits);
-            tries++;
-            if (tries == MAX_TRIES) {
-                fatal("system did not return a number within the given bounds"
-                      " (tried %d times)", MAX_TRIES);
-            }
+    // until we get a valid number. This approach avoids the slight
+    // non-uniformity of the simpler scale-and-truncate algorithm.
+    //
+    // Strictly speaking, there is a chance that we will never read a valid
+    // number, so cap the attempts at some reasonable value. For a cap of N,
+    // the chance that we'll never read a valid number is at most 1/2^N, which
+    // for N=100 is less than one in a nonillion (assuming the generator is
+    // uniform).
+    int tries = 0;
+    while (1) {
+        read_mpz(result, source, num_bits);
+        if (mpz_cmp(result, high) <= 0)
+            break;
+        if (++tries == MAX_TRIES) {
+            fatal("system did not return a number within the given bounds"
+                  " (tried %d times)", MAX_TRIES);
         }
     }
     mpz_add(result, result, low);
