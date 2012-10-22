@@ -17,6 +17,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <getopt.h>
 #include <gmp.h>
 #include "simple_strconv.h"
@@ -62,17 +63,17 @@ static void string_to_mpz(mpz_t result, const char *str) {
 static void read_mpz(mpz_t result, const char *filename, size_t num_bits) {
     FILE *file = fopen(filename, "r");
     if (!file)
-        fatal("could not open file for reading: %s", filename);
+        fatal("could not open %s: %s", filename, strerror(errno));
     // Turn off buffering to avoid reading more data than we need.
     setbuf(file, NULL);
 
     size_t num_bytes = 1 + (num_bits - 1) / CHAR_BIT;
-    char *bytes = malloc(num_bytes);
+    char *bytes = (char*) malloc(num_bytes);
     if (!bytes)
         fatal("out of memory");
 
     if (fread(bytes, 1, num_bytes, file) != num_bytes)
-        fatal("error reading from file: %s", filename);
+        fatal("error reading from %s", filename);
     fclose(file);
 
     // Chop off unnecessary leading bits.
@@ -82,8 +83,8 @@ static void read_mpz(mpz_t result, const char *filename, size_t num_bits) {
     free(bytes);
 }
 
-static void get_random_number(mpz_t result, mpz_t low, mpz_t high,
-                              const char *source) {
+static void get_random_mpz(mpz_t result, mpz_t low, mpz_t high,
+                           const char *source) {
     // To conserve memory, repurpose |high| to be a temporary.
     mpz_sub(high, high, low);
     if (mpz_sgn(high) <= 0)
@@ -178,11 +179,11 @@ int main(int argc, char **argv) {
             mpz_set_ui(high, DEFAULT_UPPER_BOUND);
     }
 
-    mpz_t random_number;
-    mpz_init(random_number);
-    get_random_number(random_number, low, high, random_source);
-    mpz_out_str(stdout, base, random_number);
+    mpz_t result;
+    mpz_init(result);
+    get_random_mpz(result, low, high, random_source);
+    mpz_out_str(stdout, base, result);
     putchar('\n');
-    mpz_clears(low, high, random_number, NULL);
+    mpz_clears(low, high, result, NULL);
     return EXIT_SUCCESS;
 }
