@@ -5,8 +5,6 @@ distributed in a specified range. It is designed to be purely an interface to
 the system PRNG(s) (e.g. `/dev/urandom` on \*nix), so it doesn't actually
 perform any PRN generation itself.
 
-*[PRNG]: Pseudorandom Number Generator
-
 Compiling
 ---------
 To build `rand`, you need the following on your system.
