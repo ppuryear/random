@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -123,7 +124,8 @@ static void get_random_mpz(mpz_t result, mpz_t low, mpz_t high,
 
 int main(int argc, char **argv) {
     const char *random_source = "/dev/urandom";
-    size_t bits = 0;
+    bool use_bits = false;
+    mp_bitcnt_t bits = 0;
     int base = 10;
 
     static const struct option long_options[] = {
@@ -138,19 +140,19 @@ int main(int argc, char **argv) {
         if (c == -1)
             break;
 
-        int error;
         switch (c) {
         case 'r':
             random_source = "/dev/random";
             break;
         case 'b':
-            error = simple_strtoi(&base, optarg, 10);
-            if (error < 0 || base < -36 || (base > -2 && base < 2) || base > 62)
+            if (simple_strtoi(&base, optarg, 10) < 0)
                 fatal("invalid base: '%s'", optarg);
+            if (base < -36 || (base > -2 && base < 2) || base > 62)
+                fatal("unsupported base: '%s'", optarg);
             break;
         case 's':
-            error = simple_strtoz(&bits, optarg, 10);
-            if (error < 0 || bits == 0)
+            use_bits = true;
+            if (simple_strtoul(&bits, optarg, 10) < 0)
                 fatal("invalid bit width: '%s'", optarg);
             break;
         case 'h':
@@ -162,7 +164,7 @@ int main(int argc, char **argv) {
     }
     argv += optind;
     argc -= optind;
-    if (argc > 2 || (bits > 0 && argc > 0))
+    if (argc > 2 || (use_bits && argc > 0))
         fatal("too many arguments");
 
     mpz_t low, high;
@@ -173,7 +175,7 @@ int main(int argc, char **argv) {
     } else if (argc == 1) {
         string_to_mpz(high, argv[0]);
     } else {
-        if (bits > 0)
+        if (use_bits)
             mpz_setbit(high, bits);
         else
             mpz_set_ui(high, DEFAULT_UPPER_BOUND);
