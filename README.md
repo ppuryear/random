@@ -32,7 +32,7 @@ Options:
 Notes:
 If only a single bound is provided, it is assumed to be the upper bound, and
 the lower bound is assumed to be 0. If no bounds are provided, the range is
-assumed to be [0, 65536).
+assumed to be [0, 32768).
 
 The following bases are supported:
    2..36  : decimal digits, lowercase letters
