@@ -131,7 +131,7 @@ static void get_random_mpz(mpz_t result, mpz_t low, mpz_t high,
 int main(int argc, char **argv) {
     const char *random_source = "/dev/urandom";
     bool use_bits = false;
-    mp_bitcnt_t bits = 0;
+    mp_bitcnt_t bits;
     int base = 10;
 
     static const struct option long_options[] = {
