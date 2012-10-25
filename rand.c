@@ -23,7 +23,7 @@
 #include <gmp.h>
 #include "simple_strconv.h"
 
-#define DEFAULT_UPPER_BOUND (1 << 16)
+#define DEFAULT_UPPER_BOUND (1 << 15)
 #define MAX_TRIES 100
 
 static void fatal(const char *msg, ...) {
