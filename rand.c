@@ -26,6 +26,8 @@
 #define DEFAULT_UPPER_BOUND (1 << 15)
 #define MAX_TRIES 100
 
+static const char *gRandomFile = "/dev/urandom";
+
 static void fatal(const char *msg, ...) {
     va_list ap;
     fprintf(stderr, "rand: fatal: ");
@@ -61,37 +63,13 @@ static void print_usage() {
     DEFAULT_UPPER_BOUND);
 }
 
-static void string_to_mpz(mpz_t result, const char *str) {
+static void arg_to_mpz(mpz_t result, const char *arg) {
     char guard;
-    if (gmp_sscanf(str, "%Zi%c", result, &guard) != 1)
-        fatal("invalid argument: '%s'", str);
+    if (gmp_sscanf(arg, "%Zi%c", result, &guard) != 1)
+        fatal("invalid argument: '%s'", arg);
 }
 
-static void read_mpz(mpz_t result, const char *filename, size_t num_bits) {
-    FILE *file = fopen(filename, "r");
-    if (!file)
-        fatal("could not open %s: %s", filename, strerror(errno));
-    // Turn off buffering to avoid reading more data than we need.
-    setbuf(file, NULL);
-
-    size_t num_bytes = 1 + (num_bits - 1) / CHAR_BIT;
-    char *bytes = (char*) malloc(num_bytes);
-    if (!bytes)
-        fatal("out of memory");
-
-    if (fread(bytes, 1, num_bytes, file) != num_bytes)
-        fatal("error reading from %s", filename);
-    fclose(file);
-
-    // Chop off unnecessary leading bits.
-    if (num_bits % CHAR_BIT != 0)
-        bytes[0] &= (1 << (num_bits % CHAR_BIT)) - 1;
-    mpz_import(result, num_bytes, 1, 1, 0, 0, bytes);
-    free(bytes);
-}
-
-static void get_random_mpz(mpz_t result, mpz_t low, mpz_t high,
-                           const char *source) {
+static void get_random_mpz(mpz_t result, mpz_t low, mpz_t high) {
     // To conserve memory, repurpose |high| to be a temporary.
     mpz_sub(high, high, low);
     if (mpz_sgn(high) <= 0)
@@ -103,12 +81,23 @@ static void get_random_mpz(mpz_t result, mpz_t low, mpz_t high,
         mpz_set(result, low);
         return;
     }
-    size_t num_bits = mpz_sizeinbase(high, 2);
 
-    // If the range is not a power of 2, then read_mpz can return a number
-    // larger than the range (by at most a factor of 2). If this happens, retry
-    // until we get a valid number. This approach avoids the slight
-    // non-uniformity of the simpler scale-and-truncate algorithm.
+    size_t num_bits = mpz_sizeinbase(high, 2);
+    size_t num_bytes = 1 + (num_bits - 1) / CHAR_BIT;
+    char *random_bytes = (char*) malloc(num_bytes);
+    if (!random_bytes)
+        fatal("out of memory");
+
+    FILE *random_file = fopen(gRandomFile, "r");
+    if (!random_file)
+        fatal("could not open %s: %s", gRandomFile, strerror(errno));
+    // Turn off buffering to avoid reading more data than we need.
+    setbuf(random_file, NULL);
+
+    // If the range is not a power of 2, then the system PRNG can return a
+    // number larger than the range (by at most a factor of 2). If this
+    // happens, retry until we get a valid number. This approach avoids the
+    // slight non-uniformity of the simpler scale-and-truncate algorithm.
     //
     // Strictly speaking, there is a chance that we will never read a valid
     // number, so cap the attempts at some reasonable value. For a cap of N,
@@ -117,19 +106,27 @@ static void get_random_mpz(mpz_t result, mpz_t low, mpz_t high,
     // uniform).
     int tries = 0;
     while (1) {
-        read_mpz(result, source, num_bits);
+        if (fread(random_bytes, 1, num_bytes, random_file) != num_bytes)
+            fatal("error reading from %s", gRandomFile);
+        // Chop off unnecessary leading bits.
+        if (num_bits % CHAR_BIT != 0)
+            random_bytes[0] &= (1 << (num_bits % CHAR_BIT)) - 1;
+
+        mpz_import(result, num_bytes, 1, 1, 0, 0, random_bytes);
         if (mpz_cmp(result, high) <= 0)
             break;
+
         if (++tries == MAX_TRIES) {
             fatal("system did not return a number within the given bounds"
                   " (tried %d times)", MAX_TRIES);
         }
     }
     mpz_add(result, result, low);
+    free(random_bytes);
+    fclose(random_file);
 }
 
 int main(int argc, char **argv) {
-    const char *random_source = "/dev/urandom";
     bool use_bits = false;
     mp_bitcnt_t bits;
     int base = 10;
@@ -148,13 +145,12 @@ int main(int argc, char **argv) {
 
         switch (c) {
         case 'r':
-            random_source = "/dev/random";
+            gRandomFile = "/dev/random";
             break;
         case 'b':
-            if (simple_strtoi(&base, optarg, 10) < 0)
+            if (simple_strtoi(&base, optarg, 10) < 0 ||
+                abs(base) < 2 || base < -36 || base > 62)
                 fatal("invalid base: '%s'", optarg);
-            if (base < -36 || (base > -2 && base < 2) || base > 62)
-                fatal("unsupported base: '%s'", optarg);
             break;
         case 's':
             use_bits = true;
@@ -176,10 +172,10 @@ int main(int argc, char **argv) {
     mpz_t low, high;
     mpz_inits(low, high, NULL);
     if (argc == 2) {
-        string_to_mpz(low, argv[0]);
-        string_to_mpz(high, argv[1]);
+        arg_to_mpz(low, argv[0]);
+        arg_to_mpz(high, argv[1]);
     } else if (argc == 1) {
-        string_to_mpz(high, argv[0]);
+        arg_to_mpz(high, argv[0]);
     } else {
         if (use_bits)
             mpz_setbit(high, bits);
@@ -189,7 +185,7 @@ int main(int argc, char **argv) {
 
     mpz_t result;
     mpz_init(result);
-    get_random_mpz(result, low, high, random_source);
+    get_random_mpz(result, low, high);
     mpz_out_str(stdout, base, result);
     putchar('\n');
     mpz_clears(low, high, result, NULL);
