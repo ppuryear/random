@@ -116,10 +116,8 @@ static void get_random_mpz(mpz_t result, mpz_t low, mpz_t high) {
         if (mpz_cmp(result, high) <= 0)
             break;
 
-        if (++tries == MAX_TRIES) {
-            fatal("system did not return a number within the given bounds"
-                  " (tried %d times)", MAX_TRIES);
-        }
+        if (++tries == MAX_TRIES)
+            fatal("system did not return a number within the given bounds");
     }
     mpz_add(result, result, low);
     free(random_bytes);
