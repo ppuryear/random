@@ -70,18 +70,22 @@ static void arg_to_mpz(mpz_t result, const char *arg) {
 }
 
 static void get_random_mpz(mpz_t result, mpz_t low, mpz_t high) {
+    // In the comments below, let L be the length of the desired interval,
+    // i.e. |high - low|.
     // To conserve memory, repurpose |high| to be a temporary.
     mpz_sub(high, high, low);
     if (mpz_sgn(high) <= 0)
         fatal("upper bound must be strictly greater than lower bound");
 
-    // If |high - low| == 1, there's only one possible result, so return it.
+    // If L == 1, there's only one possible result, so return it.
     mpz_sub_ui(high, high, 1);
     if (mpz_sgn(high) == 0) {
         mpz_set(result, low);
         return;
     }
 
+    // The system PRNG provides us with a source of of random *bits*, so we
+    // need to figure out the number of bits required to represent L.
     size_t num_bits = mpz_sizeinbase(high, 2);
     size_t num_bytes = 1 + (num_bits - 1) / CHAR_BIT;
     char *random_bytes = (char*) malloc(num_bytes);
@@ -91,19 +95,18 @@ static void get_random_mpz(mpz_t result, mpz_t low, mpz_t high) {
     FILE *random_file = fopen(gRandomFile, "r");
     if (!random_file)
         fatal("could not open %s: %s", gRandomFile, strerror(errno));
-    // Turn off buffering to avoid reading more data than we need.
+    // Turn off buffering to avoid reading (and hence making the system
+    // generate) more random data than we need.
     setbuf(random_file, NULL);
 
-    // If the range is not a power of 2, then the system PRNG can return a
-    // number larger than the range (by at most a factor of 2). If this
-    // happens, retry until we get a valid number. This approach avoids the
-    // slight non-uniformity of the simpler scale-and-truncate algorithm.
+    // Read a number R in the interval [0, 2^|num_bits|) from the RNG.
+    // Note that if L is not a power of 2, then L < 2^|num_bits|, so R may be
+    // >= L by *at most* a factor of 2. If this happens, retry until R < L.
     //
-    // Strictly speaking, there is a chance that we will never read a valid
-    // number, so cap the attempts at some reasonable value. For a cap of N,
-    // the chance that we'll never read a valid number is at most 1/2^N, which
-    // for N=100 is less than one in a nonillion (assuming the generator is
-    // uniform).
+    // Strictly speaking, there is a chance that no matter how many times we
+    // read, R will be >= L each time, so cap the attempts at some reasonable
+    // value. For a cap of N, the chance that we'll never read a valid number
+    // is at most 1/2^N, which for N=100 is less than one in a nonillion.
     int tries = 0;
     while (1) {
         if (fread(random_bytes, 1, num_bytes, random_file) != num_bytes)
@@ -113,6 +116,7 @@ static void get_random_mpz(mpz_t result, mpz_t low, mpz_t high) {
             random_bytes[0] &= (1 << (num_bits % CHAR_BIT)) - 1;
 
         mpz_import(result, num_bytes, 1, 1, 0, 0, random_bytes);
+        // At this point, |high| == L - 1, so we need a <= here.
         if (mpz_cmp(result, high) <= 0)
             break;
 
