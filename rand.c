@@ -23,10 +23,9 @@
 #include <gmp.h>
 #include "simple_strconv.h"
 
-#define DEFAULT_BASE 10
-#define DEFAULT_UPPER_BOUND (1 << 15)
-#define MAX_TRIES 100
-
+static const int kDefaultBase = 10;
+static const unsigned long kDefaultUpperBound = 1UL << 15;
+static const int kMaxReads = 100;
 static const char *gRandomFileName = "/dev/urandom";
 
 static void fatal(const char *msg, ...) {
@@ -55,13 +54,13 @@ static void print_usage() {
 "Notes:\n"
 "If only a single bound is provided, it is assumed to be the upper bound, and\n"
 "the lower bound is assumed to be 0. If no bounds are provided, the interval is\n"
-"assumed to be [0, %d).\n"
+"assumed to be [0, %lu).\n"
 "\n"
 "The following bases are supported:\n"
 "   2..36  : decimal digits, lowercase letters\n"
 "  -2..-36 : decimal digits, uppercase letters\n"
 "  37..62  : decimal digits, uppercase letters, lowercase letters\n",
-    DEFAULT_BASE, DEFAULT_UPPER_BOUND);
+    kDefaultBase, kDefaultUpperBound);
 }
 
 static void arg_to_mpz(mpz_t result, const char *arg) {
@@ -108,7 +107,7 @@ static void get_random_mpz(mpz_t result, mpz_t low, mpz_t high) {
     // read, R will be >= L each time, so cap the attempts at some reasonable
     // value. For a cap of N, the chance that we'll never read a valid number
     // is at most 1/2^N, which for N=100 is less than one in a nonillion.
-    int tries = 0;
+    int reads = 0;
     while (1) {
         if (fread(random_bytes, 1, num_bytes, random_file) != num_bytes)
             fatal("error reading from %s", gRandomFileName);
@@ -121,7 +120,7 @@ static void get_random_mpz(mpz_t result, mpz_t low, mpz_t high) {
         if (mpz_cmp(result, high) <= 0)
             break;
 
-        if (++tries == MAX_TRIES)
+        if (++reads == kMaxReads)
             fatal("system did not return a number within the given bounds");
     }
     mpz_add(result, result, low);
@@ -132,7 +131,7 @@ static void get_random_mpz(mpz_t result, mpz_t low, mpz_t high) {
 int main(int argc, char **argv) {
     bool use_bits = false;
     mp_bitcnt_t bits;
-    int base = DEFAULT_BASE;
+    int base = kDefaultBase;
 
     static const struct option long_options[] = {
         { "help", no_argument, NULL, 'h' },
@@ -183,7 +182,7 @@ int main(int argc, char **argv) {
         if (use_bits)
             mpz_setbit(high, bits);
         else
-            mpz_set_ui(high, DEFAULT_UPPER_BOUND);
+            mpz_set_ui(high, kDefaultUpperBound);
     }
 
     mpz_t result;
