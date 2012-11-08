@@ -23,10 +23,11 @@
 #include <gmp.h>
 #include "simple_strconv.h"
 
+#define DEFAULT_BASE 10
 #define DEFAULT_UPPER_BOUND (1 << 15)
 #define MAX_TRIES 100
 
-static const char *gRandomFile = "/dev/urandom";
+static const char *gRandomFileName = "/dev/urandom";
 
 static void fatal(const char *msg, ...) {
     va_list ap;
@@ -48,19 +49,19 @@ static void print_usage() {
 "Options:\n"
 "  -h    show this message and exit\n"
 "  -r    read from /dev/random instead of /dev/urandom\n"
-"  -b N  print the result in the given base (see NOTES)\n"
-"  -s N  use the interval [0, 2^N)\n"
+"  -b N  print the result in the given base (see NOTES) (default: %d)\n"
+"  -s N  use the interval [0, 2^N) instead of [lower_bound, upper_bound)\n"
 "\n"
 "Notes:\n"
 "If only a single bound is provided, it is assumed to be the upper bound, and\n"
-"the lower bound is assumed to be 0. If no bounds are provided, the range is\n"
+"the lower bound is assumed to be 0. If no bounds are provided, the interval is\n"
 "assumed to be [0, %d).\n"
 "\n"
 "The following bases are supported:\n"
 "   2..36  : decimal digits, lowercase letters\n"
 "  -2..-36 : decimal digits, uppercase letters\n"
 "  37..62  : decimal digits, uppercase letters, lowercase letters\n",
-    DEFAULT_UPPER_BOUND);
+    DEFAULT_BASE, DEFAULT_UPPER_BOUND);
 }
 
 static void arg_to_mpz(mpz_t result, const char *arg) {
@@ -92,9 +93,9 @@ static void get_random_mpz(mpz_t result, mpz_t low, mpz_t high) {
     if (!random_bytes)
         fatal("out of memory");
 
-    FILE *random_file = fopen(gRandomFile, "r");
+    FILE *random_file = fopen(gRandomFileName, "r");
     if (!random_file)
-        fatal("could not open %s: %s", gRandomFile, strerror(errno));
+        fatal("could not open %s: %s", gRandomFileName, strerror(errno));
     // Turn off buffering to avoid reading (and hence making the system
     // generate) more random data than we need.
     setbuf(random_file, NULL);
@@ -110,7 +111,7 @@ static void get_random_mpz(mpz_t result, mpz_t low, mpz_t high) {
     int tries = 0;
     while (1) {
         if (fread(random_bytes, 1, num_bytes, random_file) != num_bytes)
-            fatal("error reading from %s", gRandomFile);
+            fatal("error reading from %s", gRandomFileName);
         // Chop off unnecessary leading bits.
         if (num_bits % CHAR_BIT != 0)
             random_bytes[0] &= (1 << (num_bits % CHAR_BIT)) - 1;
@@ -131,7 +132,7 @@ static void get_random_mpz(mpz_t result, mpz_t low, mpz_t high) {
 int main(int argc, char **argv) {
     bool use_bits = false;
     mp_bitcnt_t bits;
-    int base = 10;
+    int base = DEFAULT_BASE;
 
     static const struct option long_options[] = {
         { "help", no_argument, NULL, 'h' },
@@ -147,7 +148,7 @@ int main(int argc, char **argv) {
 
         switch (c) {
         case 'r':
-            gRandomFile = "/dev/random";
+            gRandomFileName = "/dev/random";
             break;
         case 'b':
             if (simple_strtoi(&base, optarg, 10) < 0 ||

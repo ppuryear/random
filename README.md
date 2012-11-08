@@ -26,12 +26,12 @@ interval [lower_bound, upper_bound).
 Options:
   -h    show this message and exit
   -r    read from /dev/random instead of /dev/urandom
-  -b N  print the result in the given base (see NOTES)
-  -s N  use the interval [0, 2^N)
+  -b N  print the result in the given base (see NOTES) (default: 10)
+  -s N  use the interval [0, 2^N) instead of [lower_bound, upper_bound)
 
 Notes:
 If only a single bound is provided, it is assumed to be the upper bound, and
-the lower bound is assumed to be 0. If no bounds are provided, the range is
+the lower bound is assumed to be 0. If no bounds are provided, the interval is
 assumed to be [0, 32768).
 
 The following bases are supported:
