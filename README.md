@@ -4,7 +4,7 @@ rand
 distributed in a specified range. It is designed to be purely an interface to
 the system PRNG(s) (e.g. `/dev/urandom` on \*nix), so it doesn't actually
 perform any PRN generation itself. For more information, see
-[the manual](docs/manual.asciidoc).
+[the manual](manual.asciidoc).
 
 Compiling
 ---------
