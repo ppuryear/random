@@ -18,7 +18,7 @@ project(rand C)
 add_subdirectory(simple-strconv EXCLUDE_FROM_ALL)
 include_directories(simple-strconv/include)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
 add_executable(rand rand.c)
 target_link_libraries(rand simple_strconv gmp)
 
