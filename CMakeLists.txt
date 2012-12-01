@@ -26,15 +26,14 @@ add_executable(random random.c)
 target_link_libraries(random simple_strconv gmp)
 
 add_custom_command(
-    OUTPUT random.1.gz
-    COMMAND a2x --format manpage "${CMAKE_CURRENT_SOURCE_DIR}/manual.asciidoc"
+    OUTPUT random.1
+    COMMAND a2x --format manpage ${CMAKE_CURRENT_SOURCE_DIR}/manual.asciidoc
         --destination-dir=.
-    COMMAND gzip -f random.1
     DEPENDS manual.asciidoc
     COMMENT "Building man page random(1)"
     VERBATIM
 )
-add_custom_target(man ALL DEPENDS random.1.gz)
+add_custom_target(man ALL DEPENDS random.1)
 
 install(TARGETS random DESTINATION bin)
-install(FILES random.1.gz DESTINATION share/man/man1)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/random.1 DESTINATION share/man/man1)
