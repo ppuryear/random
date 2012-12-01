@@ -22,4 +22,17 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu11")
 add_executable(rand rand.c)
 target_link_libraries(rand simple_strconv gmp)
 
+add_custom_command(
+    OUTPUT rand.1.gz
+    COMMAND a2x --format manpage "${CMAKE_CURRENT_SOURCE_DIR}/manual.asciidoc"
+        --destination-dir=.
+    COMMAND gzip -f rand.1
+    DEPENDS manual.asciidoc
+    COMMENT "Building man page rand(1)"
+    VERBATIM
+)
+#install(FILES rand.1.gz DESTINATION share/man/man1)
+
+add_custom_target(man ALL DEPENDS rand.1.gz)
+
 install(TARGETS rand DESTINATION bin)

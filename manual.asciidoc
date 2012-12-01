@@ -1,0 +1,78 @@
+////
+Copyright 2012 Philip Puryear
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+////
+
+RAND(1)
+=======
+Philip Puryear <philippuryear@gmail.com>
+:doctype: manpage
+:man source: rand
+:man version: git
+:man manual: User Commands
+
+NAME
+----
+rand - print a random number to the console
+
+SYNOPSIS
+--------
+*rand* ['OPTIONS'] ['LOWERBOUND'] ['UPPERBOUND']
+
+DESCRIPTION
+-----------
+The *rand* command prints a uniformly-distributed random integer to the
+console. The range of the printed number is ['LOWERBOUND', 'UPPERBOUND'),
+where 'LOWERBOUND' and 'UPPERBOUND' are integers. If only one bound is given,
+the range [0, 'BOUND') is used. If no bounds are given, the range [0, 32768)
+is used.
+
+*rand* reads all random data directly from the system PRNG (by default,
+/dev/urandom on POSIX systems) and formats it as a printable number. It
+performs no random number generation on its own.
+
+OPTIONS
+-------
+*-b, --base*='BASE'::
+    Print the output in the given base, where 'BASE' is in one of the following
+    ranges:
+[horizontal]
+    *2..36*;; decimal digits, lowercase letters
+    *-2..-36*;; decimal digits, uppercase letters
+    *37..62*;; decimal digits, uppercase letters, lowercase letters
+
+*-r, --use-random*::
+    On POSIX systems, read random data from /dev/random instead of /dev/urandom.
+
+*-h, --help*::
+    Print the help text.
+
+*-s, --size*='SIZE'::
+    Specify the size of the output in bits. If this option is specified, then
+    the output range is taken to be [0, 2^'SIZE'). This option cannot be used if
+    either 'LOWERBOUND' or 'UPPERBOUND' is provided on the command-line.
+
+EXIT STATUS
+-----------
+[horizontal]
+*0*:: Success.
+*1*:: Failure.
+
+RESOURCES
+---------
+GitHub: <https://github.com/ppuryear/rand/>
+
+SEE ALSO
+--------
+*rand*(3)

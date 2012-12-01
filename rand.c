@@ -40,27 +40,14 @@ static void fatal(const char *msg, ...) {
 
 static void print_usage() {
     printf(
-"usage: rand [options] [lower_bound] [upper_bound]\n"
-"\n"
-"rand prints an arbitrary-size random integer uniformly distributed in the\n"
-"interval [lower_bound, upper_bound).\n"
+"usage: rand [OPTIONS] [LOWERBOUND] [UPPERBOUND]\n"
 "\n"
 "Options:\n"
 "  -h    show this message and exit\n"
 "  -r    read from /dev/random instead of /dev/urandom\n"
-"  -b N  print the result in the given base (see NOTES) (default: %d)\n"
-"  -s N  use the interval [0, 2^N) instead of [lower_bound, upper_bound)\n"
-"\n"
-"Notes:\n"
-"If only a single bound is provided, it is assumed to be the upper bound, and\n"
-"the lower bound is assumed to be 0. If no bounds are provided, the interval is\n"
-"assumed to be [0, %lu).\n"
-"\n"
-"The following bases are supported:\n"
-"   2..36  : decimal digits, lowercase letters\n"
-"  -2..-36 : decimal digits, uppercase letters\n"
-"  37..62  : decimal digits, uppercase letters, lowercase letters\n",
-    kDefaultBase, kDefaultUpperBound);
+"  -b N  print the result in the given base (default: %d)\n"
+"  -s N  use the interval [0, 2^N)\n",
+    kDefaultBase);
 }
 
 static void arg_to_mpz(mpz_t result, const char *arg) {
