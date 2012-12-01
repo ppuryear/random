@@ -1,12 +1,12 @@
-rand
+random
 ======
-`rand` is a small command-line utility that outputs a random integer uniformly
-distributed in a specified range. For more information, see
+`random` is a small command-line utility that outputs a random integer
+uniformly distributed in a specified range. For more information, see
 [the manual](manual.asciidoc).
 
 Compiling
 ---------
-To build `rand`, you need the following on your system.
+To build `random`, you need the following on your system.
 
 *   [CMake](http://www.cmake.org)
 *   A compiler that supports C99.

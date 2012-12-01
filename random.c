@@ -30,7 +30,7 @@ static const char *gRandomFileName = "/dev/urandom";
 
 static void fatal(const char *msg, ...) {
     va_list ap;
-    fprintf(stderr, "rand: fatal: ");
+    fprintf(stderr, "random: fatal: ");
     va_start(ap, msg);
     vfprintf(stderr, msg, ap);
     va_end(ap);
@@ -40,7 +40,7 @@ static void fatal(const char *msg, ...) {
 
 static void print_usage() {
     printf(
-"usage: rand [OPTIONS] [LOWERBOUND] [UPPERBOUND]\n"
+"usage: random [OPTIONS] [LOWERBOUND] [UPPERBOUND]\n"
 "\n"
 "Options:\n"
 "  -h    show this message and exit\n"

@@ -14,31 +14,31 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ////
 
-RAND(1)
+RANDOM(1)
 =======
 Philip Puryear <philippuryear@gmail.com>
 :doctype: manpage
-:man source: rand
+:man source: random
 :man version: git
 :man manual: User Commands
 
 NAME
 ----
-rand - print a random number to the console
+random - print a random number to the console
 
 SYNOPSIS
 --------
-*rand* ['OPTIONS'] ['LOWERBOUND'] ['UPPERBOUND']
+*random* ['OPTIONS'] ['LOWERBOUND'] ['UPPERBOUND']
 
 DESCRIPTION
 -----------
-The *rand* command prints a uniformly-distributed random integer to the
+The *random* command prints a uniformly-distributed random integer to the
 console. The range of the printed number is ['LOWERBOUND', 'UPPERBOUND'),
 where 'LOWERBOUND' and 'UPPERBOUND' are integers. If only one bound is given,
 the range [0, 'BOUND') is used. If no bounds are given, the range [0, 32768)
 is used.
 
-*rand* reads all random data directly from the system PRNG (by default,
+*random* reads all random data directly from the system PRNG (by default,
 /dev/urandom on POSIX systems) and formats it as a printable number. It
 performs no random number generation on its own.
 
@@ -71,8 +71,8 @@ EXIT STATUS
 
 RESOURCES
 ---------
-GitHub: <https://github.com/ppuryear/rand/>
+GitHub: <https://github.com/ppuryear/random/>
 
 SEE ALSO
 --------
-*rand*(3)
+*rand*(1)
