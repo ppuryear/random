@@ -158,8 +158,8 @@ int main(int argc, char **argv) {
     if (argc > 2 || (use_bits && argc > 0))
         fatal("too many arguments");
 
-    mpz_t low, high;
-    mpz_inits(low, high, NULL);
+    mpz_t low, high, result;
+    mpz_inits(low, high, result, NULL);
     if (argc == 2) {
         arg_to_mpz(low, argv[0]);
         arg_to_mpz(high, argv[1]);
@@ -172,8 +172,6 @@ int main(int argc, char **argv) {
             mpz_set_ui(high, kDefaultUpperBound);
     }
 
-    mpz_t result;
-    mpz_init(result);
     get_random_mpz(result, low, high);
     mpz_out_str(stdout, base, result);
     putchar('\n');
