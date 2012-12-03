@@ -2,7 +2,7 @@ random
 ======
 `random` is a small command-line utility that outputs a random integer
 uniformly distributed in a specified range. For more information, see
-[the manual](manual.asciidoc).
+`manual.asciidoc`.
 
 Compiling
 ---------
