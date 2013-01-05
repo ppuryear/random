@@ -111,8 +111,8 @@ static void get_random_mpz(mpz_t result, mpz_t low, mpz_t high) {
             fatal("system did not return a number within the given bounds");
     }
     mpz_add(result, result, low);
-    free(random_bytes);
     fclose(random_file);
+    free(random_bytes);
 }
 
 int main(int argc, char **argv) {
@@ -165,11 +165,10 @@ int main(int argc, char **argv) {
         arg_to_mpz(high, argv[1]);
     } else if (argc == 1) {
         arg_to_mpz(high, argv[0]);
+    } else if (use_bits) {
+        mpz_setbit(high, bits);
     } else {
-        if (use_bits)
-            mpz_setbit(high, bits);
-        else
-            mpz_set_ui(high, kDefaultUpperBound);
+        mpz_set_ui(high, kDefaultUpperBound);
     }
 
     get_random_mpz(result, low, high);
