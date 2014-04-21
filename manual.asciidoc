@@ -1,5 +1,5 @@
 ////
-Copyright 2012 Philip Puryear
+Copyright 2014 Philip Puryear
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@ limitations under the License.
 ////
 
 RANDOM(1)
-=======
+=========
 Philip Puryear <philippuryear@gmail.com>
 :doctype: manpage
 :man source: random
@@ -38,12 +38,18 @@ where 'LOWERBOUND' and 'UPPERBOUND' are integers. If only one bound is given,
 the range [0, 'BOUND') is used. If no bounds are given, the range [0, 32768)
 is used.
 
-*random* reads all random data directly from the system PRNG (by default,
+*random* reads all random data directly from the system RNG (by default,
 /dev/urandom on POSIX systems) and formats it as a printable number. It
 performs no random number generation on its own.
 
 OPTIONS
 -------
+*-h, --help*::
+    Print the help text.
+
+*-r, --use-random*::
+    On POSIX systems, read random data from /dev/random instead of /dev/urandom.
+
 *-b, --base*='BASE'::
     Print the output in the given base, where 'BASE' is in one of the following
     ranges:
@@ -52,13 +58,7 @@ OPTIONS
     *-2..-36*;; decimal digits, uppercase letters
     *37..62*;; decimal digits, uppercase letters, lowercase letters
 
-*-r, --use-random*::
-    On POSIX systems, read random data from /dev/random instead of /dev/urandom.
-
-*-h, --help*::
-    Print the help text.
-
-*-s, --size*='SIZE'::
+*-s, --bit-width*='SIZE'::
     Specify the size of the output in bits. If this option is specified, then
     the output range is taken to be [0, 2^'SIZE'). This option cannot be used if
     either 'LOWERBOUND' or 'UPPERBOUND' is provided on the command-line.
@@ -75,4 +75,4 @@ GitHub: <https://github.com/ppuryear/random/>
 
 SEE ALSO
 --------
-*rand*(1)
+*random*(4)

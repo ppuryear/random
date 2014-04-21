@@ -1,4 +1,4 @@
-# Copyright 2012 Philip Puryear
+# Copyright 2014 Philip Puryear
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,8 +27,7 @@ target_link_libraries(random simple_strconv gmp)
 
 add_custom_command(
     OUTPUT random.1
-    COMMAND a2x --format manpage ${CMAKE_CURRENT_SOURCE_DIR}/manual.asciidoc
-        --destination-dir=.
+    COMMAND a2x -D . -f manpage ${CMAKE_CURRENT_SOURCE_DIR}/manual.asciidoc
     DEPENDS manual.asciidoc
     COMMENT "Building man page random(1)"
     VERBATIM
