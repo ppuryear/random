@@ -13,4 +13,5 @@ To build `random`, you need the following on your system.
 *   The [GMP](http://gmplib.org/) library.
 *   [AsciiDoc](http://www.methods.co.nz/asciidoc/)
 
-Invoke `cmake [...] <srcdir>` to generate build files for your system.
+Populate the submodule directories with `git submodule update --init`, then
+invoke `cmake [...] <srcdir>` to generate build files for your system.
