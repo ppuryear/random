@@ -15,3 +15,23 @@ To build `random`, you need the following on your system.
 
 Populate the submodule directories with `git submodule update --init`, then
 invoke `cmake [...] <srcdir>` to generate build files for your system.
+
+Examples
+--------
+Decimal number in [0, 100):
+```
+$ random 100
+73
+```
+
+Binary 32-bit word:
+```
+$ random -b 2 -s 32
+10000111111001111000100101010010
+```
+
+256-bit hexadecimal number from `/dev/random`:
+```
+$ random -b 16 -s 256 -r
+753a4c5e2db2057b1eeadadfb00c7f42d56395467e8f45166059f583f219e7e8
+```
